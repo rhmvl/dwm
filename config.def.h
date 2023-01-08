@@ -1,35 +1,60 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx  = 1;        /* border pixel of windows */
-static const unsigned int gappx     = 5;        /* gaps between windows */
+static const unsigned int borderpx  = 3;        /* border pixel of windows */
+static const unsigned int gappx     = 10;        /* gap pixel between windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const char *fonts[]          = { "monospace:size=10" };
-static const char dmenufont[]       = "monospace:size=10";
-static const char col_gray1[]       = "#222222";
-static const char col_gray2[]       = "#444444";
-static const char col_gray3[]       = "#bbbbbb";
-static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]        = "#005577";
+static const char dmenufont[]       = "Mononoki:size=12";
+static const char col_gray1[]       = "#282828";
+static const char col_gray2[]       = "#928374";
+static const char col_gray3[]       = "#d5c4a1";
+static const char col_gray4[]       = "#ebdbb2";
+static const char col_cyan[]        = "#d65d0e";
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
 	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
 
+static const char *const autostart[] = {
+	"pulsemixer", "-k", NULL,
+	"firefox", NULL,
+	"variety", NULL,
+	"redshift", NULL,
+	"picom", "--experimental-backends", "--detect-rounded-corners", NULL,
+	"picom", "--experimental-backends", "--detect-rounded-corners", NULL,
+	"setxkbmap","us,ru,fi",",winkeys","grp:alt_shift_toggle", NULL,
+	"$HOME/scripts/volume.sh", NULL,
+/*	"alacritty", "-t", "sp_volume", "-e", "$HOME/scripts/volume_launch.sh", NULL*/
+	NULL /* terminate */
+};
+
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+
+/* launcher commands (They must be NULL terminated) */
+static const char* surf[]      = { "surf", "duckduckgo.com", NULL };
+
+static const Launcher launchers[] = {
+       /* command       name to display */
+	{ surf,         "surf" },
+};
+
 
 static const Rule rules[] = {
 	/* xprop(1):
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+		/* class      instance    title       tags mask     isfloating   monitor    scratch key */
+{ "Gimp",     NULL,       NULL,       0,            1,           -1,        0  },
+{ "firefox",  NULL,       NULL,       1 << 8,       0,           -1,        0  },
+{ NULL,       NULL,   "scratchpad",   0,            1,           -1,       's' },
+{ NULL,       NULL,   "sp_volume",   0,            1,           -1,       'v' },
+	
 };
 
 /* layout(s) */
@@ -45,7 +70,7 @@ static const Layout layouts[] = {
 };
 
 /* key definitions */
-#define MODKEY Mod1Mask
+#define MODKEY Mod4Mask
 #define TAGKEYS(KEY,TAG) \
 	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
 	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
@@ -55,10 +80,15 @@ static const Layout layouts[] = {
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
-/* commands */
+/* commands  ,*/
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
-static const char *termcmd[]  = { "st", NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, "-c", "-l", "20", NULL};
+static const char *termcmd[]  = { "alacritty", NULL };
+
+/*First arg only serves to match against key in rules*/
+static const char *scratchpadcmd[] = {"s", "alacritty", "-t", "scratchpad", NULL};
+static const char *sp_volume_control[] = {"v","st", "-t", "sp_volume","-e", "pulsemixer", NULL};
+
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -85,9 +115,12 @@ static Key keys[] = {
 	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
-	{ MODKEY,                       XK_minus,  setgaps,        {.i = -1 } },
-	{ MODKEY,                       XK_equal,  setgaps,        {.i = +1 } },
+	{ MODKEY,                       XK_minus,  setgaps,        {.i = -5 } },
+	{ MODKEY,                       XK_equal,  setgaps,        {.i = +5 } },
 	{ MODKEY|ShiftMask,             XK_equal,  setgaps,        {.i = 0  } },
+	/*SCRATCHPADS*/
+	{ MODKEY,                       XK_grave,  togglescratch,  {.v = scratchpadcmd } },
+	{ MODKEY|ShiftMask,             XK_m,      togglescratch,  {.v = sp_volume_control } },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
